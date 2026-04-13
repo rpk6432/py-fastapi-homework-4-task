@@ -48,7 +48,13 @@ async def create_user_profile(
     result = await db.execute(stmt)
     requesting_user = result.scalar_one_or_none()
 
-    if requesting_user and token_user_id != user_id:
+    if not requesting_user or not requesting_user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found or not active."
+        )
+
+    if token_user_id != user_id:
         if not requesting_user.has_group(UserGroupEnum.ADMIN):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
